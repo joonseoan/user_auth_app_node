@@ -1,0 +1,30 @@
+{
+  "name": "userauth",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server/userServer_1.js",
+    "test": "export NODE_ENV=test || SET \"NODE_ENV=test\" && mocha tests/*.test.js",
+    "test-watch": "nodemon --exec \"npm test\""
+  },
+  "engines": {
+    "node": "8.9.4"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.3",
+    "lodash": "^4.17.5",
+    "mongodb": "^3.0.6",
+    "mongoose": "^5.0.14",
+    "supertest": "^3.0.0",
+    "validator": "^9.4.1"
+  },
+  "devDependencies": {
+    "expect": "^1.20.2",
+    "mocha": "^5.1.0",
+    "nodemon": "^1.17.3"
+  }
+}
