@@ -1,4 +1,4 @@
-console.log('starting todoso_3.js');
+console.log('starting todoso.js');
 
 const mongoose = require('mongoose');
 

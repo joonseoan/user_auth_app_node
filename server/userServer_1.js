@@ -9,16 +9,17 @@ const { ObjectID } = require('mongodb');
 const _ = require('lodash');
 
 const { mongoose } = require('../db/mongoose');
+const { Todoso } = require('./models/todoso');
 const { Users } = require('./models/users');
 
 const app = express();
 
 app.use(bodyParser.json());
 
-// ================================= POST/Users ===================================================================
+// ================================= POST/Users, POST/Todoso ===================================================================
 
 
-///------------
+//------------------------------------------------------------------
 
 app.post('/users', (req, res) => {
 
@@ -56,8 +57,35 @@ app.post('/users', (req, res) => {
     });
 
 });
+
 */
-// ================================== GET/Users ================================================================
+
+app.post('/todoso', (req, res) => {
+    
+    const todoso = new Todoso ( {
+
+        text : req.body.text
+
+    });
+
+    // todoso.text : object and field format
+
+    todoso.save().then((result) => {
+
+        // object and document format
+        res.send(result);
+
+    }, (err) => {
+
+            res.status(400).send(err);
+
+    });
+
+});
+
+
+
+// ================================== GET/Users, GET Todoso ================================================================
 
 app.get('/users', (req, res) => {
 
@@ -67,6 +95,26 @@ app.get('/users', (req, res) => {
         res.send({ 
             
             users
+        
+        });
+    
+    }, (err) => {
+
+        res.status(400).send(err);
+
+    });    
+
+});
+
+
+app.get('/todoso', (req, res) => {
+
+    Todoso.find({}).then((todoso)=> {
+
+        //an array
+        res.send({ 
+            
+            todoso
         
         });
     
@@ -101,6 +149,27 @@ app.get('/users/:id', (req, res) => {
 
 });
 
+
+app.get('/todoso/:id', (req, res) => {
+
+    var id = req.params.id;
+
+    if(!ObjectID.isValid(id)) return res.status(404).send();
+
+    Todoso.findById(id).then(byID => {
+
+        if (!byID) return res.status(404).send();
+
+        res.send({ byID });
+
+    }).catch( err => res.status(400).send());
+
+}, (err) => {
+
+    res.status(400).send(err);
+
+});
+
 // ================================== DELETE/Users/:ID ========================================================================
 
 app.delete('/users/:id', (req, res) => {
@@ -110,6 +179,23 @@ app.delete('/users/:id', (req, res) => {
     if(!ObjectID.isValid(id)) return res.status(404).send();
 
     Users.findByIdAndRemove(id).then((result) => {
+
+        if(!result) return res.status(404).send();
+
+        res.send({result});
+
+    }).catch(err => res.status(400).send(err));
+
+});
+
+
+app.delete('/todoso/:id', (req, res) => {
+
+    var id = req.params.id;
+
+    if(!ObjectID.isValid(id)) return res.status(404).send();
+
+    Todoso.findByIdAndRemove(id).then((result) => {
 
         if(!result) return res.status(404).send();
 
@@ -159,17 +245,46 @@ app.patch('/users/:id', (req, res) => {
 });
 
 
+app.patch('/todoso/:id', (req, res) => {
+
+    const id = req.params.id;
+   
+    //************************* 
+    const body = _.pick(req.body, ['text', 'completed']);
+    
+    console.log('req.body:', req.body); //=> req.body: { completed: true }
+    console.log('body:', body); // => body: { completed: true }
+
+    //Validation
+    if (!ObjectID.isValid(id)) return res.status(404).send();
+
+    if (_.isBoolean(body.completed) && body.completed) {
+
+        body.completedAt = new Date().getTime();
+
+    } else {
+
+        // body.completed = false;
+        body.completedAt = null;
+
+    }   
+    
+    Todoso.findByIdAndUpdate(id, { $set : body }, { new : true }).then( updated => {
+
+        if(!updated) return res.status(404).send();
+
+        res.send({updated});
+
+    }).catch( err => res.status(400).send());
+
+
+});
 
 
 
 
-// Current "process.env.PORT" can be a production environment
-// "3000;" can be a test or development environment.
 
-// We can remove "3000" as we set up in "express" environment
-// 1) const PORT = process.env.PORT || 3000;
 
-// 2) It is production.
 const PORT = process.env.PORT;
 
 app.listen(PORT, () => {
