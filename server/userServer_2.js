@@ -1,7 +1,7 @@
 require('./server_configs/config');
 
-console.log('starting userServer_1.js working with ../db/mongoose.js');
-console.log('lodash added here');
+console.log('starting userServer_2.js working with ../db/mongoose.js');
+console.log('starting userServer_2.js working with users_2.js')
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -10,7 +10,7 @@ const _ = require('lodash');
 
 const { mongoose } = require('../db/mongoose');
 const { Todoso } = require('./models/todoso');
-const { Users } = require('./models/users');
+const { Users } = require('./models/users_2');
 
 const app = express();
 
@@ -27,38 +27,63 @@ app.post('/users', (req, res) => {
 
     const users = new Users(body);
 
+    /*
     users.save().then((result) => {
 
         res.send(result);
+
+    }).catch((err) => res.status(400).send())
+    */
+
+    // [ Reguired methods for Authentication ]
+    
+    // By using model instance
+    // Model instance, "Users()" is not for individual document.
+    // "findByToken" is a customized method.
+    // It lstens to the user's toke, tries to find the token
+    //      , and then getback to the user with fields.
+    // Users.findByToken
+
+    // By using "users" instance methdo
+    // "generateAuthToken" is responsible 
+    //      for adding tokens on individual users' document
+    //      saving that into the server.
+    // users.generateAuthToken
+
+    // 1)
+    // users.save().then((result) => {
+
+    // 2) It is the first ave only with email and password
+    //      The second save is realized with "tokens" in users_2.js
+    users.save().then(() => {
+
+        // 1)
+        // As we setup token in users_2.js
+        // res.send(result);
+        
+        // "users" : is a instance of "new Users(body)"
+        // We do not need to a singe document value here like "result"
+        //      because it has the same value of instance, "users"
+        console.log('users are in the first saving step: ', users);
+
+        // Therefore, it can call "generateAuthToken()"
+        return users.generateAuthToken();
+
+        // "token" is a returned value from "users.generateAuthToken();"
+    }).then((token) => {
+
+        // since users.generateAuthToken(); was invoked, 
+        //      users have the "tokens"' values, "access" and "token"
+        console.log('users: ', users);
+        console.log('token:',  token);
+
+        // 'x-auth' is a customized header instead of http header
+        // At 'x-auth', enter "token" and then tack on the "users" as a particular header.
+        res.header('x-auth', token).send(users);
 
     }).catch((err) => res.status(400).send());
 
 });
-
-/* mine
-app.post('/users', (req, res) => {
-    
-    const users = new Users ( {
-
-        email : req.body.email,
-        password : req.body.password
-        
-
-    });
-
-    users.save().then((result) => {
-
-        res.send(result);
-
-    }, (err) => {
-
-            res.status(400).send(err);
-
-    });
-
-});
-
-*/
 
 app.post('/todoso', (req, res) => {
     
@@ -68,11 +93,8 @@ app.post('/todoso', (req, res) => {
 
     });
 
-    // todoso.text : object and field format
-
     todoso.save().then((result) => {
 
-        // object and document format
         res.send(result);
 
     }, (err) => {
@@ -91,7 +113,6 @@ app.get('/users', (req, res) => {
 
     Users.find({}).then((users)=> {
 
-        //an array
         res.send({ 
             
             users
