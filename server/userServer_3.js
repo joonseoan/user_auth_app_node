@@ -1,7 +1,20 @@
-require('./server_configs/config');
+console.log('starting userServer_3.js');
+console.log(', working with ../db/mongoose.js');
+console.log(', working with users_3.js');
+console.log(', working with authenticate_3.js');
+console.log('Goal : learining private routes');
 
-console.log('starting userServer_2.js working with ../db/mongoose.js');
-console.log('starting userServer_2.js working with users_2.js')
+/**
+ * private routes :
+ * 
+ * By using 'auth-x' : token,
+ * 1. Validate the token
+ * 2. Find the user associated with the token
+ * 3. Then run the route code to grant user's auth on the app
+ * 
+ */
+
+require('./server_configs/config');
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -10,7 +23,8 @@ const _ = require('lodash');
 
 const { mongoose } = require('../db/mongoose');
 const { Todoso } = require('./models/todoso');
-const { Users } = require('./models/users_2');
+const { Users } = require('./models/users_3');
+const { authenticate } = require('./middleware/authenticate_3.js');
 
 const app = express();
 
@@ -18,70 +32,73 @@ app.use(bodyParser.json());
 
 // ================================= POST/Users, POST/Todoso ===================================================================
 
-//------------------------------------------------------------------
-
+// It does not need to turn it into private route
+//      because no one will post with the private route.
 app.post('/users', (req, res) => {
 
     const body = _.pick(req.body, [ 'email', 'password' ]);
 
     const users = new Users(body);
 
-    /*
-    users.save().then((result) => {
-
-        res.send(result);
-
-    }).catch((err) => res.status(400).send())
-    */
-
-    // [ Reguired methods for Authentication ]
-    
-    // 1) "findByToken" is a customized method by usting object,"new Users()"
-    // It listens to the user's token, tries to find the token
-    //      , and then getback to the user with the associated fields.
-    // "Users.findByToken"
-
-    // 2) "generateAuthToken" is responsible by using "users" instance method 
-    //      for adding tokens on individual users' document
-    //      saving that into the server.
-    // "users.generateAuthToken"
-
-    // ------------------------------------------------------------------------------
-
-    // 1) revmoved in creating the token
-    // users.save().then((result) => {
-
-    // 2) It is the first save() only with email and password
-    // The second save() is executed with "tokens" created 
-    //      in users_2.js
     users.save().then(() => {
 
-        // 1)
-        // As we setup token in users_2.js, it is deleted.
-        // res.send(result);
-        
-        // "users" : is a instance of "new Users(body)"
-        // We do not need a single document value here like "result"
-        //      because it has the same value of instance, "users"
-        console.log('"users" are in the first step of saving: ', users);
-
-        // Therefore, it can call "generateAuthToken()"
         return users.generateAuthToken();
 
-        // "token" is a returned value from "users.generateAuthToken();"
     }).then((token) => {
 
-        // since users.generateAuthToken(); was invoked, 
-        //      "users" have the "tokens"' values, "access" and "token"
-        // "users" are the newly updatd users with "tokens"
-        console.log('users: ', users);
-        console.log('token:',  token);
-
-        // 'x-auth' is a customized header instead of http header
-        // At 'x-auth', "token" is stored and then tacks on the "users".
         res.header('x-auth', token).send(users);
 
     }).catch((err) => res.status(400).send());
+
+});
+
+/* 1) public route
+// request from the user : "token" in "x-auth" of the header
+// response to the user : "id and email" bu using "toJSON" function
+//      defined in "users" model 
+
+// In order to get the token, middleware is required.
+// When the user accesses "/users/me",
+//      it requires a header name defined and a token data only. 
+app.get('/users/me', authenticate, (req, res) => {
+
+    // Grapping the token
+    // "header()" is similar with res.header() 
+    //      which encoses a particular 'x-auth' header
+    // Here, we just grap the value of 'x-auth'
+    const token = req.header('x-auth');
+    
+    // It is the second methods to find the user 
+    //      out of the documment list, an array of the database
+    Users.findByToken(token).then((user) => {
+
+        // 1)
+        // if(!user) return res.status(401).send();
+
+        // 2)
+        if (!user) return Promise.reject();
+
+        res.send(user);
+
+    }).catch( err => {
+
+        // "401" : authentication is required.
+        res.status(401).send();
+
+    });
+
+});
+*/
+
+
+// 2) Private route (authenticate)
+// It should be broken out.
+
+app.get('/users/me', authenticate, (req, res) => {
+
+    // can use req.user 
+    //      because authenticate is an callback argument 
+    res.send(req.user);
 
 });
 
@@ -227,7 +244,7 @@ app.delete('/todoso/:id', (req, res) => {
 
 // ================================= PATCH/TODOSO/:ID ===================================================================
 
-// It is really set in stone!!!
+// Need to turn it into the private route here.
 app.patch('/users/:id', (req, res) => {
 
     const id = req.params.id;

@@ -55,37 +55,62 @@ const usersSchema = new Schema({
 
 });
 
-// In order to prevent to send back unecessary info for security reason,
-//      we should filter out the secure data to be sent back.
+// In order to prevent to send back unecessary but confidential info 
+//      for security reason, we should filter out the auth related data
+//      to be sent back to the user.
 
-// This is an overriding function pre-set to get back to the user!!!
+// This is an overriding function preset to Schema to get back to the user!!!
 usersSchema.methods.toJSON = function() {
 
+    /*
+    this in toJSON:  { _id: 5ad8ada7f2b5793420d83992,
+        email: 'jamesleekimchoian@example.com',
+        password: '1234567890',
+        tokens:
+         [ { _id: 5ad8ada7f2b5793,
+             access: 'auth',
+             token: 'token value' } ],
+        __v: 1 }
+    */
+    console.log('this in toJSON: ', this);
+
     const user = this;
-    // const backToUser = JSON.parse(user); => not working
+
+    // FYI, "const backToUser = JSON.parse(user);" => not working
 
     // "user" value is swtiched to an "backToUser Object"
     //      because "this" is a value, not an object.
     const backToUser = user.toObject();
 
-    // Then it encloses only '_id' and 'email' properties.
+    // Then it houses '_id' and 'email' properties only 
+    //      for the serrver to send this object to the user.
     return _.pick(backToUser, [ '_id', 'email']);
 
 };
 
-// UsersSchema.methods = Object.
-// Therefore, we can add any kinds of "instance" methods we like.
+// UsersSchema.methods = Object's methods (but physically working like a single unified object )
+//      for us to create any kinds of customized functions.
 // "generateAuthToken" is able to access the individual document.
-//  Then, based on info the generateAuthToken provides, we can create JWT.
+// Then, based on info the generateAuthToken() accesses to, we can create JWT.
 usersSchema.methods.generateAuthToken = function() {
 
-    // this = { generateAuthToken: [Function] }'s parent object
-    // It could be userSchema above which has empty value 
-    //      but by "methods", it refers to the return value from "generateAuthToken()"
+    // this = { generateAuthToken: [Function] }
+    // It is called by "users", an instance of "userServer_2.js".
+    // It refers to the return value from "generateAuthToken()"
     //      "userServer.js"
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this
+
+    /*
+    this { _id: 5ad8ada7f2b579342,
+        email: 'jamesleekimchoian@example.com',
+        password: '1234567890',
+        tokens: [],
+        __v: 0 }
+    */
     console.log('this', this);
+    
     const user = this;
+
     const access = 'auth';
 
     // "access" any property at any position can be accessed without the pararent assignment?
@@ -107,12 +132,14 @@ usersSchema.methods.generateAuthToken = function() {
         return token;
 
     });
-
-
-    
+   
 };
 
-/* ==> this = {}
+/* When arrow function : this = {} empty object 
+//      because it receives the Usershema object which is 
+        currently empty due to the lexical rule.
+// It other word, it does not denpends on the call
+
 UsersSchema.methods.generateAuthToken = () => {
 
     // this = { }
