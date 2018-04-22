@@ -1,18 +1,8 @@
-console.log('starting userServer_3.js');
+console.log('starting userServer_4.js');
 console.log(', working with ../db/mongoose.js');
-console.log(', working with users_3.js');
+console.log(', working with users_4.js');
 console.log(', working with authenticate_3.js');
-console.log('Goal : learining private routes');
-
-/**
- * private routes :
- * 
- * By using 'auth-x' : token,
- * 1. Validate the token
- * 2. Find the user associated with the token
- * 3. Then run the route code to grant user's auth on the app
- * 
- */
+console.log('Goal : learining hashing password');
 
 require('./server_configs/config');
 
@@ -23,7 +13,7 @@ const _ = require('lodash');
 
 const { mongoose } = require('../db/mongoose');
 const { Todoso } = require('./models/todoso');
-const { Users } = require('./models/users_3');
+const { Users } = require('./models/users_4');
 const { authenticate } = require('./middleware/authenticate_3.js');
 
 const app = express();
@@ -32,8 +22,6 @@ app.use(bodyParser.json());
 
 // ================================= POST/Users, POST/Todoso ===================================================================
 
-// It does not need to turn it into private route
-//      because no one will post with the private route.
 app.post('/users', (req, res) => {
 
     const body = _.pick(req.body, [ 'email', 'password' ]);
@@ -42,70 +30,24 @@ app.post('/users', (req, res) => {
 
     users.save().then(() => {
 
-        // From the user signup/login, generate the token.
-        // in Promisee, "return" is able to call "promise object"
         return users.generateAuthToken();
 
     }).then((token) => {
 
-
-        // if the token is correctly, create x-auth header, 
-        //      and then take token in the header
-        //      send it back to the user.   
         res.header('x-auth', token).send(users);
 
     }).catch((err) => res.status(400).send());
 
 });
 
-/* 1) public route
-// request from the user : sending "token" received at "x-auth" of the header
-        in the first sign up process
-// response to the user : "id and email" by using "toJSON" function
-//      defined in "users" model 
-
-// In order for the server to get the token the user sent
-//      , middleware is required.
-// When the user accesses "/users/me" this token data,
-//      the route requires a header name defined and a token data from the user only. 
+// Private route (authenticate)
+// It should be broken out.
 app.get('/users/me', authenticate, (req, res) => {
 
-    // Grapping the token
-    // "header()" is similar with res.header() 
-    //      which encoses a particular 'x-auth' header
-    // Here, we just grap the value of 'x-auth'
-    const token = req.header('x-auth');
-    
-    // It is the second methods to find the user 
-    //      out of the documment list, an array of the database
-    Users.findByToken(token).then((user) => {
-
-        // 1)
-        // if(!user) return res.status(401).send();
-
-        // 2)
-        if (!user) return Promise.reject();
-
-        res.send(user);
-
-    }).catch( err => {
-
-        // "401" : authentication is required.
-        res.status(401).send();
-
-    });
-
-});
-*/
-
-
-app.get('/users/me', authenticate, (req, res) => {
-
-    // can use req.user 
-    //      because authenticate is an callback argument 
     res.send(req.user);
 
 });
+
 
 app.post('/todoso', (req, res) => {
     

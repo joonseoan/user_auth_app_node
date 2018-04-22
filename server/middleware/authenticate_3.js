@@ -1,4 +1,4 @@
-const { Users } = require('../models/users_3');
+const { Users } = require('../models/users_4');
 
 // To make the function below the private, a midddleware is required.
 // Actual route defined here is not going to be called
@@ -11,10 +11,11 @@ const authenticate = (req, res, next) => {
 
         if (!user) return Promise.reject();
 
-        // Instead of using public "es.send(user);""
+        // Instead of using public "res.send(user);""
         // Let's implementPrivatization.
         
         //create private properties : "req.user and req.token" 
+        console.log('user in middlware: ', user);
         req.user = user;
         req.token = token;
 

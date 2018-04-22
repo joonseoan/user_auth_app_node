@@ -1,10 +1,13 @@
-console.log('starting user_3.js');
+console.log('starting user_4.js');
+console.log('This is about mongoose middleware to run hashing and verifying password before / after the event!!!');
+console.log('Here, I am goint to update hashing and verification before the doc is saved. -- So "Pre" will be used.');
 
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ =require('lodash');
+const bcrypt = require('bcryptjs');
 
 const usersSchema = new Schema({
 
@@ -54,10 +57,6 @@ const usersSchema = new Schema({
 
 });
 
-// [ methods vs statics ]
-// http://mongoosejs.com/docs/2.7.x/docs/methods-statics.html
-
-// methods: create and have "model" then create and run a function.
 usersSchema.methods.toJSON = function() {
 
     console.log('toJSON user: ', this);
@@ -72,8 +71,6 @@ usersSchema.methods.toJSON = function() {
 
 usersSchema.methods.generateAuthToken = function() {
     
-    // Small letter "user" stands for the instance method
-    //      to get the individual document.
     const user = this;
 
     const access = 'auth';
@@ -82,8 +79,6 @@ usersSchema.methods.generateAuthToken = function() {
 
     user.tokens = user.tokens.concat([{ access, token }]);
 
-    // "promise" object new Promise(function(resolve, reject)) in return : it is not going to run immediately
-    // It is no "Promise.resolve(function())" 
     return user.save().then(() => {
 
         return token;
@@ -92,36 +87,14 @@ usersSchema.methods.generateAuthToken = function() {
    
 };
 
-// statics : Statics are pretty much same as methods 
-//      but allow for defining functions that exist directly on your Model.
-
-// Based on "token" delivered from parameters from 'x-auth header of user's req,
-//      it verifies and finds the user document.
 usersSchema.statics.findByToken = function (token) {
 
-    // "this" : 'x-auth' of header
-
-    /**
-     * 
-      function model(doc, fields, skipId) {
-      if (!(this instanceof model)) {
-        return new model(doc, fields, skipId);
-      }
-      Model.call(this, doc, fields, skipId);
-    }
-
-    */
     console.log('this in findByToken: ', this);
 
-    // Upper letter "User" stands for a model
-    //      to bind it.
     const User = this;
 
-    let decoded; // it will convert the hash code into readable info.
-                // Then, based on the decoded, we can find the user document.
-    
-    // In order to stop working?
-    //      when the token payload is manipulated.
+    let decoded; 
+
     try {
 
         decoded = jwt.verify(token, 'abcde');
@@ -130,34 +103,53 @@ usersSchema.statics.findByToken = function (token) {
 
         console.log('Got some error');
 
-        // 1)
-        // return new Promise((resolve, reject) => {
-
-            // generate reject() function only.
-            // reject();
-
-        // });
-
-        // 2)
-        return Promise.reject(); // "e" will be injected into ()
+        return Promise.reject(); 
 
     }
 
-    // To be chaining from "findByToken()" like "then"
-    //      to get to "userServer_3.js" 
     return Users.findOne({
         
         _id : decoded._id,
-
-        // When we try to find object's property
-        //      user '', a single quote 
-        //      outside the property name.
         'tokens.token' : token,
         'tokens.access' : 'auth'
     
     });
 
 };
+
+// This function will run before "save" promise event here.
+usersSchema.pre('save', function (next) {
+
+    const user = this;
+
+    // if "password" property inside of this is modified
+    // Also, it works even when the user is created.
+    if (user.isModified('password')) {
+
+        bcrypt.genSalt(10, (err, salt) => {
+
+            // "current value of user.password"
+            bcrypt.hash(user.password, salt, (err, hash) => {
+
+                // changing the current password to "hash"
+                user.password = hash;
+
+                next();
+
+            });
+
+        });
+
+    } else {
+
+        next();
+
+        Promise.reject();
+
+    }
+
+
+}); 
 
 const Users = mongoose.model('Users', usersSchema); 
 
