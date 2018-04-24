@@ -71,6 +71,8 @@ usersSchema.methods.toJSON = function() {
 
 usersSchema.methods.generateAuthToken = function() {
     
+    // user => reusable
+    // then mehods to manipulate data of the object 
     const user = this;
 
     const access = 'auth';
@@ -91,7 +93,9 @@ usersSchema.statics.findByToken = function (token) {
 
     console.log('this in findByToken: ', this);
 
-    const User = this;
+    // Users => newly invoke the model.
+    // then mehods to find data of the object mappped by the model 
+    const Users = this;
 
     let decoded; 
 
@@ -147,7 +151,6 @@ usersSchema.pre('save', function (next) {
         Promise.reject();
 
     }
-
 
 }); 
 

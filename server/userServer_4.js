@@ -30,6 +30,7 @@ app.post('/users', (req, res) => {
 
     users.save().then(() => {
 
+        // return "token"
         return users.generateAuthToken();
 
     }).then((token) => {
@@ -44,6 +45,7 @@ app.post('/users', (req, res) => {
 // It should be broken out.
 app.get('/users/me', authenticate, (req, res) => {
 
+    console.log('req.user :**************************8', req.user)
     res.send(req.user);
 
 });
@@ -262,9 +264,6 @@ app.patch('/todoso/:id', (req, res) => {
 
 
 });
-
-
-
 
 
 
