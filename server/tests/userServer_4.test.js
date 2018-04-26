@@ -366,7 +366,7 @@ describe('POST /users', () => {
                     expect(user.email).toBe(email);
                     done();
                     
-                });
+                }).catch((err) => done(err));
 
             });
 
@@ -411,3 +411,103 @@ describe('POST /users', () => {
         });
 
     });
+
+describe('POST /users/login', () => {
+
+    it('it should login user and return auth token', (done) => {
+
+        request(app)
+            .post('/users/login')
+            .send({ 
+
+                    email: users[1].email,
+                    password: users[1].password
+
+            })
+            .expect(200)
+            .expect((res) => {
+
+                console.log('res.body: ', res.body);
+                console.log('res.headers', res.headers);
+
+                expect(res.body.email).toBe(users[1].email);
+                expect(res.headers['x-auth']).toExist();
+
+            }).end((err, res) => {
+
+                if(err) return done(err);
+
+                Users.findById(users[1]._id).then((user) => {
+
+                    console.log('user!!!!!!!!!!!!!!!!!!!!!!!!!: ', user)
+
+                    expect(user.tokens[0].token).toBe(res.headers['x-auth']);
+                    expect(user.tokens[0]).toInclude({
+
+                        access: 'auth',
+                        token: res.headers['x-auth']
+
+                    });
+                    done();
+      
+                }).catch((err) => done(err));
+
+            });
+
+    });
+
+    it('it should reject invalid login', (done) => {
+        /*
+        const email = 'adrew@abc.com';
+        const password = 'abcd12345';
+
+        request(app)
+            .post('/users/login')
+            .send({email, password})
+            .expect(400)
+            .expect(res => {
+
+                console.log('res.body: ', res.body);
+                console.log('res.headers: ', res.headers);
+
+                    expect(res.body.email).toNotBe(email);
+                    expect(res.headers['x-auth']).toNotExist();
+
+            }).end(done);
+        */
+
+        // Also, my idea is....
+        
+        request(app)
+            .post('/users/login')
+            .send({ 
+
+                    email: users[1].email,
+                    password: users[1].password + '1'
+
+            })
+            .expect(400)
+            .expect((res) => {
+
+                expect(res.body.email).toNotExist();
+                expect(res.headers['x-auth']).toNotExist();
+
+
+            }).end((err, res) => {
+
+                if(err) return done(err);
+
+                Users.findById(users[1]._id).then((user) => {
+
+                    console.log('user:~~~~~~~~~~~', user);
+
+                    expect(user.tokens.length).toBe(0);
+                    done();
+      
+                }).catch((err) => done(err));
+
+            });
+
+    });
+
+});

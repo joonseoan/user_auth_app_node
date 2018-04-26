@@ -87,6 +87,8 @@ app.post('/users/login', (req, res) => {
 
     // For finding and comparing the existing document....
     // No need to save this on the database.
+    // The reason for using "Users" object, not instance
+    //      is because to just take a look and find the document.
     // If it does, it will create another document.
     
     // Just send req and then send back res in the server.
@@ -105,7 +107,7 @@ app.post('/users/login', (req, res) => {
 
        // Create a new token and share with the user
        // It is more secure.
-       // "return" : "promise chaining" inside of a function
+       // "return" : "promise chaining" inside of a function.
        return user.generateAuthToken().then((token) => {
 
             res.header('x-auth', token).send(user);
@@ -334,14 +336,11 @@ app.patch('/todoso/:id', (req, res) => {
 });
 
 
-
 const PORT = process.env.PORT;
 
-app.listen(PORT, () => {
+if(!module.parent){ app.listen(PORT); };
 
-    console.log(`Started on port : ${PORT}`);
-
-});
+console.log(`Started on port : ${PORT}`);
 
 module.exports = { app };
 
