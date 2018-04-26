@@ -10,6 +10,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { ObjectID } = require('mongodb');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 const { mongoose } = require('../db/mongoose');
 const { Todoso } = require('./models/todoso');
@@ -22,6 +23,14 @@ app.use(bodyParser.json());
 
 // ================================= POST/Users, POST/Todoso ===================================================================
 
+// [ Scenario ] : 
+//  1) A user signs up for an ap in a particular device or browser here.
+//            by sending "email" and "password".
+//  2) The server receives the email and password,
+//            , then creates token, and sends it to the user.
+//            ***** Bear in mind that token does not show in "body".
+//                  It is included in "header".
+//  3) Then, the token sent to the user is stored in user's browser.
 app.post('/users', (req, res) => {
 
     const body = _.pick(req.body, [ 'email', 'password' ]);
@@ -35,6 +44,7 @@ app.post('/users', (req, res) => {
 
     }).then((token) => {
 
+        // send to client...
         res.header('x-auth', token).send(users);
 
     }).catch((err) => res.status(400).send());
@@ -43,10 +53,68 @@ app.post('/users', (req, res) => {
 
 // Private route (authenticate)
 // It should be broken out.
+
+// [ Scenario ] : 
+//  1) A user tries to log in again 
+//  2) The server redirects the url to check out the token
+//          which is included in the header, 'x-auth' of the user req.
+//  3) If the token is available in the header,
+//          the server tries to compare the user's token and database's token.
+//          Then, if they are indentified, the server lets the user login.
+//          And the server sends the logged-in user info to the user.
+//  4) If the token is not available, 
+//          the server redirects the url to '/users' from '/users/me'.
+//          Then, for the new users, the server make them newly sign up
+//          or for the existing users, just log in again by typing email and password.
 app.get('/users/me', authenticate, (req, res) => {
 
-    console.log('req.user :**************************8', req.user)
+    console.log('req.user :**************************8', req.user);
+    // send user info to client
     res.send(req.user);
+
+});
+
+// [ Scenario ] : 
+//  1) For the existing users, however, that use a different browser or device
+//          which means that the user does not have token,
+//          the server must let them login again.
+//     Just bear in mind that the users here have the email and password.
+//  2) The server identifies the password the uers types here
+//          and then lets them log in here.
+app.post('/users/login', (req, res) => {
+
+    const body = _.pick(req.body, [ 'email', 'password' ]);
+
+    // For finding and comparing the existing document....
+    // No need to save this on the database.
+    // If it does, it will create another document.
+    
+    // Just send req and then send back res in the server.
+    // body = "req.body"
+    // res.send(body) = res including "body";
+    // console.log("res.send(body): ", res.send(body));
+
+    Users.findByCredentials(body.email, body.password).then((user) => {
+
+       // create token and send to the user again here.
+       // user.tokens =  users.generateAuthToken();
+       //console.log('user of findByCredentials: ', user);
+        
+       // Reuse the existing token in the database
+       // res.header('x-auth', user.tokens[0].token).send(user);
+
+       // Create a new token and share with the user
+       // It is more secure.
+       // "return" : "promise chaining" inside of a function
+       return user.generateAuthToken().then((token) => {
+
+            res.header('x-auth', token).send(user);
+
+       });
+
+       // res.send(user);
+
+    }).catch((err) => res.status(400).send());
 
 });
 

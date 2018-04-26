@@ -288,7 +288,8 @@ describe('GET /users/me', () => {
 
         request(app)
             .get('/users/me')
-            // have header information
+
+            // have "header" information
             // The first arg : header name
             // The second arg : target property
             .set('x-auth', users[0].tokens[0].token)
@@ -337,9 +338,7 @@ describe('POST /users', () => {
 
                 // Should check out both below for me.
                 // console.log('res.body: ', res.body);
-                // console.log('res.headers:', res.headers);
-
-                // console.log('decoded: ', decoded);
+                // console.log('res.headers:', ********res.headers);
                 // console.log('res.body._id: ', res.body._id);
 
                  expect(res.headers['x-auth']).toExist();
@@ -353,6 +352,7 @@ describe('POST /users', () => {
                 console.log('res.body: $$$$$$$$$$$$$$$', res.body);
                 console.log('res.headers: $$$$$$$$$$$$$$$', res.headers);
 
+                // console.log('decoded: ', decoded);
                 const decoded = jwt.verify(res.headers['x-auth'], 'abcde');
 
                 // findbyID() ==> MongoDB
@@ -375,7 +375,7 @@ describe('POST /users', () => {
         it('should return validation errors if request is invalid', (done) => {
 
 
-            const email = 'abcdef';
+            const email = 'abcdef'; // no email format
             const password = '12345678';
 
             request(app)

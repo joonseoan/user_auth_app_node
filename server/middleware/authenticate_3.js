@@ -17,10 +17,24 @@ const authenticate = (req, res, next) => {
         // Let's implement Privatization.
         
         //create private properties : "req.user and req.token" 
+
+        /**
+         * user in middlware:  { tokens:
+            [ { _id: 5ade1ec05798379cd0b21788,
+                access: 'auth',
+                token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1YWRlMWVjMDU3OTgzNzljZDBiMjE3ODciLCJhY2Nlc3MiOiJhdXRoIiwiaWF0IjoxNTI0NTA2MzA0fQ.J9QK0Y3iYJcXUZwWfpj86IRUL3f4h74BeieVYk3t9js' } ],
+            _id: 5ade1ec05798379cd0b21787,
+            email: 'jo@json.com',
+            password: '$2a$10$wFLKwS8LdsEtMzzr6Oh/vuKSGIeJRhpQJJzjeDB2aA9Hx.iYh2gvK',
+            __v: 1 }
+         */
         console.log('user in middlware: ', user);
 
+        // create new property to send to "res" of express server.
+        //      because req does not include "user" document here.
         req.user = user;
-        // req.token = token; //?
+        req.token = user.tokens[0].token;
+        // req.token = token; // for what?
 
         // in order to execute the following function 
         //      which has an "authenticate" args
@@ -36,3 +50,6 @@ const authenticate = (req, res, next) => {
 };
 
 module.exports = { authenticate };
+
+
+/*fgsgsfg*/

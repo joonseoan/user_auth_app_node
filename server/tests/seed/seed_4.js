@@ -9,6 +9,9 @@ const { Users } = require('../../models/users_4');
 const firstUserID = new ObjectID();
 const secondUserID = new ObjectID();
 
+// The documents here does not use express.
+// It directly connects to DB.
+// Therefore, we need creating tokens here.
 const users = [
     
     {
@@ -60,29 +63,32 @@ const populateTodoso = (done) => {
   
     Todoso.remove({}).then(() => {
 
-
         return Todoso.insertMany(todoso);
 
     }).then(() => done());
   
 };
 
+// Just for creating the document in MongoDB
+//      and then comparing the data of the mocha test cases
+//      which utilize "express"
 const populateUsers = (done) => {
 
     Users.remove({}).then(() => {
 
         // "insertMany" is a MongoDB function.
-        // Therefore, it insert data at they are 
+        // Therefore, it insert data as they are 
         //      without mongoogse schema and model.
         // return Users.insertMany(users);
         
         // In order to use middleware of password
         //      before the plain password is stored in the database.
         // "password middleware" is a preset function defined by mongoose.
-        const userOne = new Users(users[0]).save();
-        const userTwo = new Users(users[1]).save();
+        const userOne = new Users(users[0]).save(); // it does not use express!!!
+        const userTwo = new Users(users[1]).save(); // it does not use express!!!
 
         console.log('userOne: ', userOne);
+
         // In this case, it must wait until all Promise functions are finished and then "Resolved",
         //      then it can deliver two variables.
         return Promise.all([ userOne, userTwo ]);

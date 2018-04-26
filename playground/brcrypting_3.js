@@ -44,9 +44,9 @@ bcrypt.genSalt(10, (err, salt) => {
 var hashedPWD = "$2a$10$5/.fLuTd15N2brk6YcMg8OfzsQ2YF4xca.TvpGslvQb7W.4dGrmkm";
 
 // "compare"returns "true" / "false"
-bcrypt.compare('dfd', hashedPWD, (err, res) => {
+bcrypt.compare(pwd, hashedPWD, (err, res) => {
 
-    console.log(res); // => false
+    console.log(res); // => true
 
 
 });
