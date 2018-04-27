@@ -155,19 +155,39 @@ usersSchema.methods.removeToken = function(token) {
 
     // About $pull mongoDB method
     // https://docs.mongodb.com/manual/reference/operator/update/pull/
-        
     return user.update(
 
-            {$pull : { tokens : { token } } }
+            // remove all the inside of defined property "tokens"
+            /*
+                {
+                     _id: 1,
+                    fruits: [ "apples", "pears", "oranges", "grapes", "bananas" ],
+                    vegetables: [ "carrots", "celery", "squash", "carrots" ]
+                }
+
+                {
+                    _id: 2,
+                   fruits: [ "plums", "kiwis", "oranges", "bananas", "apples" ],
+                   vegetables: [ "broccoli", "zucchini", "carrots", "onions" ]
+                }
+
+                db.stores.update(
+                   { },
+                   { $pull: { fruits: { $in: [ "apples", "oranges" ] }, vegetables: "carrots" } },
+                   { multi: true }
+
+               )
+
+            **/
+
+
+
+            { $pull : { tokens : { token } } }
 
         );
 
-
 }
     
-        
-
-
 // This function will run before "save" promise event here.
 usersSchema.pre("save", function(next) {
     const user = this;
