@@ -99,7 +99,7 @@ usersSchema.statics.findByToken = function(token) {
     });
 };
 
-usersSchema.statics.findByCredentials = (email, password) => {
+usersSchema.statics.findByCredentials = function(email, password) {
 
     console.log('email: ', email);
     console.log('password: ', password);
@@ -148,6 +148,25 @@ usersSchema.statics.findByCredentials = (email, password) => {
     });
     
 };
+
+usersSchema.methods.removeToken = function(token) {
+
+    const user = this;
+
+    // About $pull mongoDB method
+    // https://docs.mongodb.com/manual/reference/operator/update/pull/
+        
+    return user.update(
+
+            {$pull : { tokens : { token } } }
+
+        );
+
+
+}
+    
+        
+
 
 // This function will run before "save" promise event here.
 usersSchema.pre("save", function(next) {

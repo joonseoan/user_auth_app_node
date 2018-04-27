@@ -33,7 +33,7 @@ const authenticate = (req, res, next) => {
         // create new property to send to "res" of express server.
         //      because req does not include "user" document here.
         req.user = user;
-        req.token = user.tokens[0].token;
+        req.token = token;
         // req.token = token; // for what?
 
         // in order to execute the following function 
@@ -50,6 +50,3 @@ const authenticate = (req, res, next) => {
 };
 
 module.exports = { authenticate };
-
-
-/*fgsgsfg*/
