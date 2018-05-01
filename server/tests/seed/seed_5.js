@@ -27,7 +27,14 @@ const users = [
 
         _id : secondUserID,
         email: 'jen@abc.com',
-        password: '1234abcd'
+        password: '1234abcd',
+        tokens: [{
+
+            access : 'auth',
+            token : jwt.sign({ _id: secondUserID.toHexString(), access: 'auth'}, 'abcde').toString()
+
+        }]
+    
 
     }
 

@@ -84,8 +84,6 @@ app.delete('/users/me/token', authenticate, (req, res) =>{
 
 app.post('/todoso', authenticate, (req, res) => {
     
-    //console.log('currentUser', currentUser);
-
     const todoso = new Todoso ( {
 
         text: req.body.text,
@@ -101,7 +99,7 @@ app.post('/todoso', authenticate, (req, res) => {
 
     }, (err) => {
 
-            res.status(400).send(err);
+        res.status(400).send(err);
 
     });
 
@@ -127,13 +125,22 @@ app.get('/todoso', authenticate, (req, res) => {
 
 });
 
-app.get('/todoso/:id', (req, res) => {
+app.get('/todoso/:id', authenticate, (req, res) => {
 
     var id = req.params.id;
 
     if(!ObjectID.isValid(id)) return res.status(404).send();
 
-    Todoso.findById(id).then(byID => {
+    // By using 'authenticate' m/w
+    Todoso.findOne({ 
+
+        _user : req.user._id,
+        _id : id
+
+        }).then((byID) => {
+    
+
+    // Todoso.findById(id).then(byID => {
 
         if (!byID) return res.status(404).send();
 
@@ -147,13 +154,23 @@ app.get('/todoso/:id', (req, res) => {
 
 });
 
-app.delete('/todoso/:id', (req, res) => {
+app.delete('/todoso/:id', authenticate, (req, res) => {
 
     var id = req.params.id;
 
     if(!ObjectID.isValid(id)) return res.status(404).send();
 
-    Todoso.findByIdAndRemove(id).then((result) => {
+    // 1)
+    // Todoso.findByIdAndRemove(id).then((result) => {
+
+    // findOneAndRemove can put more than one conditions!!!! 
+    //      but it just finds one doc. 
+    Todoso.findOneAndRemove({
+
+             _id : id,
+             _user : req.user._id
+
+    }).then((result) => {
 
         if(!result) return res.status(404).send();
 
@@ -163,14 +180,14 @@ app.delete('/todoso/:id', (req, res) => {
 
 });
 
-app.patch('/todoso/:id', (req, res) => {
+app.patch('/todoso/:id', authenticate, (req, res) => {
 
     const id = req.params.id;
    
     const body = _.pick(req.body, ['text', 'completed']);
     
-    console.log('req.body:', req.body); //=> req.body: { completed: true }
-    console.log('body:', body); // => body: { completed: true }
+    // console.log('req.body:', req.body); //=> req.body: { completed: true }
+    // console.log('body:', body); // => body: { completed: true }
 
     if (!ObjectID.isValid(id)) return res.status(404).send();
 
@@ -184,17 +201,26 @@ app.patch('/todoso/:id', (req, res) => {
 
     }   
     
-    Todoso.findByIdAndUpdate(id, { $set : body }, { new : true }).then( updated => {
+    // 1)
+    // Todoso.findOneAndUpdate(id, { $set : body }, { new : true }).then( updated => {
 
-        if(!updated) return res.status(404).send();
+    // 2)
+    // With 'authenticate'
+    // Must use the object!!! NOT Variable here.
+    Todoso.findOneAndUpdate({ 
 
-        res.send({updated});
+            _id: id,
+            _user: req.user._id
+
+        }, { $set: body }, { new: true }).then( updated => {
+
+            if(!updated) return res.status(404).send();
+
+            res.send({updated});
 
     }).catch( err => res.status(400).send());
 
-
 });
-
 
 const PORT = process.env.PORT;
 
@@ -203,5 +229,3 @@ if(!module.parent){ app.listen(PORT); };
 console.log(`Started on port : ${PORT}`);
 
 module.exports = { app };
-
-

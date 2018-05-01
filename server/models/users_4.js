@@ -71,8 +71,11 @@ usersSchema.methods.generateAuthToken = function() {
     user.tokens = user.tokens.concat([{ access, token }]);
 
     return user.save().then(() => {
+
         return token;
+    
     });
+    
 };
 
 usersSchema.statics.findByToken = function(token) {
