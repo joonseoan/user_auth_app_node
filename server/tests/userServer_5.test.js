@@ -1,19 +1,19 @@
-/*console.log('starting userServer_4.test.js');
+console.log('starting userServer_4.test.js');
 
-const expect = require('expect'); // MUST USE npm install expect@1.20.2 --save-dev (so far)
+const expect = require('expect'); 
 const request = require('supertest');
 const { ObjectID } = require('mongodb');
 const jwt = require('jsonwebtoken');
 
-const { app } = require('../userServer_4');
-const { Todoso } = require('../models/todoso');
+const { app } = require('../userServer_5');
+const { Todoso } = require('../models/todoso_5');
 const { Users } = require('../models/users_4');
+const mongoose = require('mongoose');
 
-const { todoso, populateTodoso, users, populateUsers } = require('./seed/seed_4');
+const { todoso, populateTodoso, users, populateUsers } = require('./seed/seed_5');
 
 beforeEach(populateUsers);
 beforeEach(populateTodoso);
-
 
 // =========================================== POST/TODOSO ======================================
 
@@ -25,12 +25,14 @@ describe('POST/todoso', () => {
 
         request(app)
             .post('/todoso')
-            .send({ text }) // send and thenn save this field and document in database
+
+            // Just to use 'x-auth' header. 
+            // It does not create create same '_user' value as users[0]._id 
+            .set('x-auth', users[0].tokens[0].token)
+            .send({ text }) 
             .expect(200)
             .expect((res) => {
 
-                // "res.body.text" is a field that the server shows the confirmation to the user
-                // It is an object and document format specified in "server_8.js"
                 expect(res.body.text).toBe(text);
             
             })
@@ -39,11 +41,11 @@ describe('POST/todoso', () => {
                 if(err) return done(err);
 
                 Todoso.find({ text }).then( (todoso) => {
-
-                    // firnd queries => an array format
+                // Todoso.find({ _user : mongoose.Types.ObjectId(users[0]._id) }).then( (todoso) => {
+                
+                    console.log(todoso, 'todoso~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                
                     expect(todoso.length).toBe(1);
-
-                    // Becasue a collection is composed of an array format.
                     expect(todoso[0].text).toBe(text);
                     done();
 
@@ -57,6 +59,7 @@ describe('POST/todoso', () => {
 
         request(app)
             .post('/todoso')
+            .set('x-auth', users[0].tokens[0].token)
             .send({})
             .expect(400)
             .expect((res) => {
@@ -90,11 +93,11 @@ describe ('Get /todoso', () => {
 
         request(app)
             .get('/todoso')
+            .set('x-auth', users[0].tokens[0].token)
             .expect(200)
             .expect((res) => {
                 
-                // returns an array format because all documents
-                expect(res.body.todoso.length).toBe(2);
+                expect(res.body.todoso.length).toBe(1)
 
             })
             .end(done);
@@ -105,8 +108,6 @@ describe ('Get /todoso', () => {
 
 
 // =========================================== GET/TODOSO/:ID ======================================
-// find quieries and get all result ==> an array format!!!
-// Other results are an object format.
 
 describe('Get /todoso/:id', () => {
 
@@ -117,7 +118,6 @@ describe('Get /todoso/:id', () => {
             .expect(200)
             .expect((res) => {
 
-                // res.body.byID => sends the MongoDB document with matched ID.
                 expect(res.body.byID.text).toBe(todoso[0].text);
             
             })
@@ -161,13 +161,9 @@ describe('Delete /todoso/:id', () => {
 
         request(app)
             .delete(`/todoso/${hexID}`)
-            // Until this step, the document with the _id value still exists
-            //  Therefore, we can access the directory.
             .expect(200) 
             .expect((res) => {
 
-                // Bear in mind that it returns the deleted document.
-                // An object format.
                 expect(res.body.result._id).toBe(hexID);
 
             })
@@ -178,7 +174,7 @@ describe('Delete /todoso/:id', () => {
                 Todoso.findById(hexID).then((todoso) => {
 
                     expect(todoso).toBe(null);
-                    expect(todoso).toNotExist(); // toNotExist deprecated, now by the way!!!
+                    expect(todoso).toNotExist(); 
                     done();
 
                 }).catch(err => done(err));
@@ -336,11 +332,6 @@ describe('POST /users', () => {
             .expect(200)
             .expect( res => {
 
-                // Should check out both below for me.
-                // console.log('res.body: ', res.body);
-                // console.log('res.headers:', ********res.headers);
-                // console.log('res.body._id: ', res.body._id);
-
                  expect(res.headers['x-auth']).toExist();
                  expect(res.body.email).toBe(email);
             
@@ -349,16 +340,9 @@ describe('POST /users', () => {
 
                 if(err) return done(err);
 
-                console.log('res.body: $$$$$$$$$$$$$$$', res.body);
-                console.log('res.headers: $$$$$$$$$$$$$$$', res.headers);
-
-                // console.log('decoded: ', decoded);
                 const decoded = jwt.verify(res.headers['x-auth'], 'abcde');
 
-                // findbyID() ==> MongoDB
                 Users.findById(decoded._id).then( (user) => {
-
-                    console.log('user: *****************:', user);
 
                     expect(user.tokens[0].token).toEqual(res.headers['x-auth']);
                     expect(user.tokens[0].access).toBe('auth');
@@ -427,9 +411,6 @@ describe('POST /users/login', () => {
             .expect(200)
             .expect((res) => {
 
-                console.log('res.body: ', res.body);
-                console.log('res.headers', res.headers);
-
                 expect(res.body.email).toBe(users[1].email);
                 expect(res.headers['x-auth']).toExist();
 
@@ -438,8 +419,6 @@ describe('POST /users/login', () => {
                 if(err) return done(err);
 
                 Users.findById(users[1]._id).then((user) => {
-
-                    console.log('user!!!!!!!!!!!!!!!!!!!!!!!!!: ', user)
 
                     expect(user.tokens[0].token).toBe(res.headers['x-auth']);
                     expect(user.tokens[0]).toInclude({
@@ -457,28 +436,8 @@ describe('POST /users/login', () => {
     });
 
     it('it should reject invalid login', (done) => {
-        /*
-        const email = 'adrew@abc.com';
-        const password = 'abcd12345';
-
-        request(app)
-            .post('/users/login')
-            .send({email, password})
-            .expect(400)
-            .expect(res => {
-
-                console.log('res.body: ', res.body);
-                console.log('res.headers: ', res.headers);
-
-                    expect(res.body.email).toNotBe(email);
-                    expect(res.headers['x-auth']).toNotExist();
-
-            }).end(done);
-        */
-
-        // Also, my idea is....
         
-/*        request(app)
+        request(app)
             .post('/users/login')
             .send({ 
 
@@ -526,7 +485,6 @@ describe('Delete /users/me/token', () => {
 
                 Users.findById(users[0]._id).then(user => {
 
-                    //expect(user.tokens[0].token).toNotExist();
                     expect(user.tokens.length).toBe(0);
                     expect(user.email).toExist();
                     done();
@@ -536,4 +494,4 @@ describe('Delete /users/me/token', () => {
             });
     });
 
-});*/
+});

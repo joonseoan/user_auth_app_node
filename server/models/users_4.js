@@ -85,18 +85,25 @@ usersSchema.statics.findByToken = function(token) {
     let decoded;
 
     try {
+
         decoded = jwt.verify(token, "abcde");
+    
     } catch (e) {
-        console.log("Got some error");
 
         return Promise.reject();
+    
     }
 
     return Users.findOne({
+    
         _id: decoded._id,
+
+        //***** when we call a property of property    
         "tokens.token": token,
         "tokens.access": "auth"
+    
     });
+
 };
 
 usersSchema.statics.findByCredentials = function(email, password) {
@@ -132,9 +139,7 @@ usersSchema.statics.findByCredentials = function(email, password) {
         
                     // res.send(user); "
                     resolve(user);
-                    const res = resolve(user)
-                    console.log('resolve(user): ', res)
-
+                    
                 } else {
 
                     reject();
@@ -190,25 +195,35 @@ usersSchema.methods.removeToken = function(token) {
     
 // This function will run before "save" promise event here.
 usersSchema.pre("save", function(next) {
+
     const user = this;
 
     // if "password" property inside of this is modified
     // Also, it works even when the user is created.
+    
     if (user.isModified("password")) {
+    
         bcrypt.genSalt(10, (err, salt) => {
+    
             // "current value of user.password"
             bcrypt.hash(user.password, salt, (err, hash) => {
+    
                 // changing the current password to "hash"
                 user.password = hash;
 
                 next();
+    
             });
+    
         });
+    
     } else {
+
         next();
 
         Promise.reject();
     }
+
 });
 
 const Users = mongoose.model("Users", usersSchema);

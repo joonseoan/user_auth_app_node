@@ -13,10 +13,10 @@ const authenticate = (req, res, next) => {
 
         if (!user) return Promise.reject();
 
-        // Instead of using public "res.send(user);""
+        // ****** Instead of using public "res.send(user);""
         // Let's implement Privatization.
         
-        //create private properties : "req.user and req.token" 
+        // Create private properties : "req.user and req.token" 
 
         /**
          * user in middlware:  { tokens:
@@ -28,11 +28,19 @@ const authenticate = (req, res, next) => {
             password: '$2a$10$wFLKwS8LdsEtMzzr6Oh/vuKSGIeJRhpQJJzjeDB2aA9Hx.iYh2gvK',
             __v: 1 }
          */
-        console.log('user in middlware: ', user);
+        // console.log('user in middlware: ', user);
 
-        // create new property to send to "res" of express server.
+        // create new properties to send to "res" of express server.
         //      because req does not include "user" document here.
-        req.user = user;
+        
+        //
+        // 1) When the express does not specify "res.send()"
+        //      it gets back to the server with req.user which is a new property 
+        req.user = user; 
+
+        // 2) It directly gets back to the user in m/w
+        //res.send(user);
+
         req.token = token;
         // req.token = token; // for what?
 

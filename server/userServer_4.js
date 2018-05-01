@@ -21,13 +21,13 @@ const app = express();
 
 app.use(bodyParser.json());
 
-// ================================= POST/Users, POST/Todoso ===================================================================
+// ================================= User Auth ===================================================================
 
 // [ Scenario ] : 
-//  1) A user signs up for an ap in a particular device or browser here.
+//  1) A user signs up for an app in a particular device or browser here.
 //            by sending "email" and "password".
 //  2) The server receives the email and password,
-//            , then creates token, and sends it to the user.
+//            , then creates token, and sends it back to the user.
 //            ***** Bear in mind that token does not show in "body".
 //                  It is included in "header".
 //  3) Then, the token sent to the user is stored in user's browser.
@@ -42,9 +42,12 @@ app.post('/users', (req, res) => {
         // return "token"
         return users.generateAuthToken();
 
+    // token is not explitly specified in method caller
+    //      but can be noticed by the return value of the method.
     }).then((token) => {
 
-        // send to client...
+        // bear in mind that there are res.header and res.body or res.send (req.body)
+        //       to be sent to client...
         res.header('x-auth', token).send(users);
 
     }).catch((err) => res.status(400).send());
@@ -64,15 +67,22 @@ app.post('/users', (req, res) => {
 //          And the server sends the logged-in user info to the user.
 //  4) If the token is not available, 
 //          the server redirects the url to '/users' from '/users/me'.
-//          Then, for the new users, the server make them newly sign up
+//          Then, for the new users, the server makes them newly sign up
 //          or for the existing users, just log in again by typing email and password.
+
+// 1) When the express server is required to get back to the user.
 app.get('/users/me', authenticate, (req, res) => {
 
-    console.log('req.user :**************************8', req.user);
-    // send user info to client
-    res.send(req.user);
+//     // console.log('req.user :**************************8', req.user);
+//     // send user info to client
+       res.send(req.user);
 
 });
+
+// 2) In case, when the express takes advantage of the middleware 
+//      to get back to the user.
+// app.get('/users/me', authenticate);
+
 
 // [ Scenario ] : 
 //  1) For the existing users, however, that use a different browser or device
@@ -81,26 +91,37 @@ app.get('/users/me', authenticate, (req, res) => {
 //     Just bear in mind that the users here have the email and password.
 //  2) The server identifies the password the uers types here
 //          and then lets them log in here.
+//  3) If user's email and password are not available, 
+//          the server lets the user redirect to "GET /users"
 app.post('/users/login', (req, res) => {
 
     const body = _.pick(req.body, [ 'email', 'password' ]);
 
     // For finding and comparing the existing document....
-    // No need to save this on the database.
-    // The reason for using "Users" object, not instance
-    //      is because to just take a look and find the document.
-    // If it does, it will create another document.
-    
-    // Just send req and then send back res in the server.
+    //      "save()" is not required for the database.
+    // Also, simpley we user "Users" object, not instance
+    //      just to take a look and find the document.
+
+    // Just send req and then send back res from the server.
     // body = "req.body"
     // res.send(body) = res including "body";
     // console.log("res.send(body): ", res.send(body));
 
+    // In the other way using an instancee, but it is not necessary
+    //      when we just try to find the document.
+    // const findingUsers = new Users();
+    // findingUsers.findByCredentials(body.email, body.password).then((user) => {
+    
     Users.findByCredentials(body.email, body.password).then((user) => {
+
+        //** So far my knowledge of callback of Promise is that
+        //      it must a single function without the additional chaining.????
+        // Here, additional chaining would cause unhandled promise error.
+        // That is why it has a different format of 'GET /users'
 
        // create token and send to the user again here.
        // user.tokens =  users.generateAuthToken();
-       //console.log('user of findByCredentials: ', user);
+       // console.log('user of findByCredentials: ', user);
         
        // Reuse the existing token in the database
        // res.header('x-auth', user.tokens[0].token).send(user);
@@ -108,13 +129,17 @@ app.post('/users/login', (req, res) => {
        // Create a new token and share with the user
        // It is more secure.
        // "return" : "promise chaining" inside of a function.
+       
+       // It must not used because callback return is required for "Resolve"
        return user.generateAuthToken().then((token) => {
 
-            res.header('x-auth', token).send(user);
+              // It cannot be used because of "Resolve"
+              // return user.generateAuthToken()
+              //  res.header('x-auth', token).send(user);
+
+              res.header('x-auth', token).send(user);
 
        });
-
-       // res.send(user);
 
     }).catch((err) => res.status(400).send());
 
@@ -137,6 +162,9 @@ app.delete('/users/me/token', authenticate, (req, res) =>{
     });
 
 });
+
+//==================================================================================
+
 
 
 app.post('/todoso', (req, res) => {
