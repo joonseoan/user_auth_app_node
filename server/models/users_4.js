@@ -14,6 +14,7 @@ const _ = require("lodash");
 const bcrypt = require("bcryptjs");
 
 const usersSchema = new Schema ({
+    
     email: {
         type: String,
         required: true,
@@ -65,7 +66,7 @@ usersSchema.methods.generateAuthToken = function() {
     const access = "auth";
 
     const token = jwt
-        .sign({ _id: user._id.toHexString(), access }, "abcde")
+        .sign({ _id: user._id.toHexString(), access }, process.env.JWT_SECRET)
         .toString();
 
     user.tokens = user.tokens.concat([{ access, token }]);
@@ -89,7 +90,7 @@ usersSchema.statics.findByToken = function(token) {
 
     try {
 
-        decoded = jwt.verify(token, "abcde");
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     } catch (e) {
 
@@ -187,8 +188,6 @@ usersSchema.methods.removeToken = function(token) {
                )
 
             **/
-
-
 
             { $pull : { tokens : { token } } }
 

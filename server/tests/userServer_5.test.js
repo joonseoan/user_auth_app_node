@@ -42,9 +42,7 @@ describe('POST/todoso', () => {
 
                 Todoso.find({ text }).then( (todoso) => {
                 // Todoso.find({ _user : mongoose.Types.ObjectId(users[0]._id) }).then( (todoso) => {
-                
-                    // console.log(todoso, 'todoso~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                
+                                
                     expect(todoso.length).toBe(1);
                     expect(todoso[0].text).toBe(text);
                     done();
@@ -256,7 +254,7 @@ describe('Delete /todoso/:id', () => {
     
 });  
 
-// =========================================== PATCH/TODOSO/:ID ======================================
+//=========================================== PATCH/TODOSO/:ID ======================================
 
 describe('PATCH /todoso/:id', () => {
 
@@ -268,6 +266,13 @@ describe('PATCH /todoso/:id', () => {
 
         request(app)
             .patch(`/todoso/${hexID}`)
+
+             // The reason we still use 'users[0].tokens[0].token',
+             //     is because the return value of 'decoded = jwt.verify(token, "abcde");'
+             //     has same "_id " and "secret" value even though it has different sub  "_id" value.
+             // Even though the test directly uses the real model, not test shema or model
+             //         the return _id and secret value of 'jwt.verify' is same as thie test schema or model
+             //         , more specifically "users[0]" here.     
             .set('x-auth', users[0].tokens[0].token)
             .expect(200)
             .send({ text, completed })
@@ -404,7 +409,7 @@ describe('POST /users', () => {
 
                 if(err) return done(err);
 
-                const decoded = jwt.verify(res.headers['x-auth'], 'abcde');
+                const decoded = jwt.verify(res.headers['x-auth'], process.env.JWT_SECRET);
 
                 Users.findById(decoded._id).then( (user) => {
 
@@ -440,7 +445,7 @@ describe('POST /users', () => {
 
         });
 
-        it('it should not create a new user if the email is in use', (done) => {
+        it('it should not create a new user if the email is overlapped', (done) => {
 
             const email ='adrew@abc.com';
             const password = '12345678';
@@ -458,7 +463,7 @@ describe('POST /users', () => {
 
         });
 
-    });
+});
 
 describe('POST /users/login', () => {
 
@@ -484,11 +489,11 @@ describe('POST /users/login', () => {
 
                 Users.findById(users[1]._id).then((user) => {
 
-                    // They are different
-                    console.log(user.tokens[0].token, '111111111111111111111111111111111111111111111');
-                    console.log(res.headers['x-auth'], '222222222222222222222222222222222222222222222');
+                    // ***** They are different
+                    console.log(user.tokens[0].token);
+                    console.log(res.headers['x-auth']);
 
-                    // In 'genAuthToken' method, "tokens' is concatenated!!!
+                    // ****** In 'genAuthToken' method, "tokens' is concatenated!!!
                     // 'tokens' is not updated or overriden to the exsisting 'tokens'
                     // 'res.headers['x-auth'] is a  new tokens
                     expect(user.tokens[1].token).toBe(res.headers['x-auth']);

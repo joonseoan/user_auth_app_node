@@ -4,7 +4,7 @@ console.log(', working with users_4.js');
 console.log(', working with authenticate_3.js');
 console.log('Goal : learining hashing password');
 
-require('./server_configs/config');
+require('./server_configs/config_5');
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -79,9 +79,49 @@ app.delete('/users/me/token', authenticate, (req, res) =>{
 
 });
 
+app.get('/users', (req, res) => {
+
+    Users.find({}).then((users)=> {
+
+        res.send({ 
+            
+            users
+        
+        });
+    
+    }, (err) => {
+
+        res.status(400).send(err);
+
+    });    
+
+});
+
+app.get('/users/:id', (req, res) => {
+
+    var id = req.params.id;
+
+    if(!ObjectID.isValid(id)) return res.status(404).send();
+
+    Users.findById(id).then(byID => {
+
+        if (!byID) return res.status(404).send();
+
+        res.send({ byID });
+
+    }).catch( err => res.status(400).send());
+
+}, (err) => {
+
+    res.status(400).send(err);
+
+});
+
+
 
 // ====================================== Todoso ==================================
 
+// In postman, sending a token which is switching to user's _id
 app.post('/todoso', authenticate, (req, res) => {
     
     const todoso = new Todoso ( {
@@ -105,6 +145,7 @@ app.post('/todoso', authenticate, (req, res) => {
 
 });
 
+// In postman, sending a token which is switching to user's _id
 app.get('/todoso', authenticate, (req, res) => {
 
     Todoso.find({ _user : req.user._id })
@@ -132,6 +173,8 @@ app.get('/todoso/:id', authenticate, (req, res) => {
     if(!ObjectID.isValid(id)) return res.status(404).send();
 
     // By using 'authenticate' m/w
+    // It must have both identified _id and _user 
+    //      to successfully get back to the user.
     Todoso.findOne({ 
 
         _user : req.user._id,
@@ -139,7 +182,6 @@ app.get('/todoso/:id', authenticate, (req, res) => {
 
         }).then((byID) => {
     
-
     // Todoso.findById(id).then(byID => {
 
         if (!byID) return res.status(404).send();
@@ -212,7 +254,7 @@ app.patch('/todoso/:id', authenticate, (req, res) => {
             _id: id,
             _user: req.user._id
 
-        }, { $set: body }, { new: true }).then( updated => {
+        }, { $set: body }, { new: true }).then(updated => {
 
             if(!updated) return res.status(404).send();
 
