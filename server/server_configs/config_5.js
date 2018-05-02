@@ -1,8 +1,5 @@
 console.log('It is for separate database tests for the application');
 
-//process.env.MONGODB_URI =  'mongodb://heroku_81gxb2fx:289e9odh9jqaickt01fs14vkt@ds211440.mlab.com:11440/heroku_81gxb2fx';
-
-
 const env = process.env.NODE_ENV || 'development';
 
 
