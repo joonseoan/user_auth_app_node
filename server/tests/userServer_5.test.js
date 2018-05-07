@@ -191,7 +191,10 @@ describe('Delete /todoso/:id', () => {
                 Todoso.findById(hexID).then((todoso) => {
 
                     expect(todoso).toBe(null);
-                    expect(todoso).toNotExist(); 
+
+                    // in jest, toNotExist() is not available.
+                    //      => toBeFalsy(toBeNull) or toBeTruthy
+                    expect(todoso).toBeFalsy(); 
                     done();
 
                 }).catch(err => done(err));
@@ -219,7 +222,8 @@ describe('Delete /todoso/:id', () => {
                 Todoso.findById(hexID).then((todoso) => {
 
                     // Because the doc is not deleted.
-                    expect(todoso).toExist();
+                    // In Jest, instead of toExist()
+                    expect(todoso).toBeTruthy();
                     done();
            
                 });            
@@ -280,7 +284,11 @@ describe('PATCH /todoso/:id', () => {
 
                 expect(res.body.updated.text).toBe(text);
                 expect(res.body.updated.completed).toBe(true); // (true)
-                expect(res.body.updated.completedAt).toBeA('number');
+
+                // In Jest, toBeA no longer exists.
+                // Instead,
+                expect(typeof res.body.updated.completedAt).toBe('number'); 
+                // expect(res.body.updated.completedAt).toBeA('number');
 
             }).end(done); 
             
@@ -315,7 +323,7 @@ describe('PATCH /todoso/:id', () => {
             .expect(res => {
 
                 expect(res.body.updated.completed).toBe(false);
-                expect(res.body.updated.completedAt).toNotExist();
+                expect(res.body.updated.completedAt).toBeFalsy();
 
             }).end(done);
     });
@@ -377,8 +385,9 @@ describe('GET /users/me', () => {
             .expect(401)
             .expect((res) => {
 
-                expect(res.body._id).toNotBe(users[1]._id.toHexString());
-                expect(res.body.email).toNotBe(users[1].email);
+                // toNotBe does not exist in Jest, we can use "not"!
+                expect(res.body._id).not.toBe(users[1]._id.toHexString());
+                expect(res.body.email).not.toBe(users[1].email);
                 expect(res.body).toEqual({});
 
             })
@@ -401,7 +410,7 @@ describe('POST /users', () => {
             .expect(200)
             .expect( res => {
 
-                 expect(res.headers['x-auth']).toExist();
+                 expect(res.headers['x-auth']).toBeTruthy();
                  expect(res.body.email).toBe(email);
             
             })
@@ -415,7 +424,7 @@ describe('POST /users', () => {
 
                     expect(user.tokens[0].token).toEqual(res.headers['x-auth']);
                     expect(user.tokens[0].access).toBe('auth');
-                    expect(user.password).toNotBe(password);
+                    expect(user.password).not.toBe(password);
                     expect(user.email).toBe(email);
                     done();
                     
@@ -437,8 +446,8 @@ describe('POST /users', () => {
                 .expect(400)
                 .expect (res => {
 
-                    expect(res.headers['x-auth']).toNotExist();
-                    expect(res.body.email).toNotExist();
+                    expect(res.headers['x-auth']).toBeFalsy();
+                    expect(res.body.email).toBeFalsy();
 
                 })
                 .end(done);
@@ -456,8 +465,8 @@ describe('POST /users', () => {
                 .expect(400)
                 .expect(res => {
 
-                    expect(res.body.email).toNotExist();
-                    expect(res.body._id).toNotExist();
+                    expect(res.body.email).toBeFalsy();
+                    expect(res.body._id).toBeFalsy();
 
                 }).end(done);
 
@@ -481,7 +490,7 @@ describe('POST /users/login', () => {
             .expect((res) => {
 
                 expect(res.body.email).toBe(users[1].email);
-                expect(res.headers['x-auth']).toExist();
+                expect(res.headers['x-auth']).toBeTruthy();
 
             }).end((err, res) => {
 
@@ -497,7 +506,11 @@ describe('POST /users/login', () => {
                     // 'tokens' is not updated or overriden to the exsisting 'tokens'
                     // 'res.headers['x-auth'] is a  new tokens
                     expect(user.tokens[1].token).toBe(res.headers['x-auth']);
-                    expect(user.tokens[1]).toInclude({
+                    
+                    // toInclude does not exist in Jest.
+                    // Instead, we gatta use "toMatchObject" 
+                    // "user" must be a object type!!!!
+                    expect(user.toObject().tokens[1]).toMatchObject({
 
                         access: 'auth',
                         token: res.headers['x-auth']
@@ -524,8 +537,8 @@ describe('POST /users/login', () => {
             .expect(400)
             .expect((res) => {
 
-                expect(res.body.email).toNotExist();
-                expect(res.headers['x-auth']).toNotExist();
+                expect(res.body.email).toBeFalsy();
+                expect(res.headers['x-auth']).toBeFalsy();
 
             }).end((err, res) => {
 
@@ -559,7 +572,7 @@ describe('Delete /users/me/token', () => {
                 Users.findById(users[0]._id).then(user => {
 
                     expect(user.tokens.length).toBe(0);
-                    expect(user.email).toExist();
+                    expect(user.email).toBeTruthy();
                     done();
 
                 }).catch(err => done(err));

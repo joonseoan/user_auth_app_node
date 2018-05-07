@@ -2,9 +2,6 @@ console.log('It is for separate database tests for the application');
 
 const env = process.env.NODE_ENV || 'development';
 
-
-
-
 console.log('process.env.*****:', env);
 
 if (env === 'development' || env === 'test') {
