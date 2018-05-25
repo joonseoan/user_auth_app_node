@@ -48,6 +48,7 @@ const usersSchema = new Schema ({
     }
 });
 
+// JSON.stringfy() vs toJson : toJSON is a defined function anme 
 usersSchema.methods.toJSON = function() {
     console.log("toJSON user: ", this);
 
@@ -56,9 +57,11 @@ usersSchema.methods.toJSON = function() {
     const backToUser = user.toObject();
 
     return _.pick(backToUser, ["_id", "email"]);
+
 };
 
 usersSchema.methods.generateAuthToken = function() {
+    
     // user => reusable
     // then mehods to manipulate data of the object
     const user = this;
@@ -66,6 +69,10 @@ usersSchema.methods.generateAuthToken = function() {
     const access = "auth";
 
     const token = jwt
+
+        // since process.env.JWT_SECRET assigns 'abcde'
+        //.sign({ _id: user._id.toHexString(), access }, 'abcde')
+        //
         .sign({ _id: user._id.toHexString(), access }, process.env.JWT_SECRET)
         .toString();
 

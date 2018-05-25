@@ -40,9 +40,7 @@ const authenticate = (req, res, next) => {
 
         // 2) It directly gets back to the user in m/w
         //res.send(user);
-
         req.token = token;
-        // req.token = token; // for what?
 
         // in order to execute the following function 
         //      which has an "authenticate" args

@@ -21,63 +21,94 @@ const app = express();
 
 app.use(bodyParser.json());
 
-// let currentUser;
-
-app.post('/users', (req, res) => {
+app.post('/users', async (req, res) => {
 
     const body = _.pick(req.body, [ 'email', 'password' ]);
 
     const users = new Users(body);
 
-    users.save().then(() => {
+    try {
 
-        return users.generateAuthToken(); // returns "token"
+        await users.save();
 
-    }).then((token) => {
+        const token = await users.generateAuthToken();
+        await res.header('x-auth', token).send(users);
 
-        res.header('x-auth', token).send(users);
 
-    }).catch((err) => res.status(400).send());
+    } catch(e) {
+
+        res.status(400).send();
+
+    }
+
+
+    // users.save().then(() => {
+
+    //     return users.generateAuthToken(); // returns "token"
+
+    // }).then((token) => {
+
+    //     res.header('x-auth', token).send(users);
+
+    // }).catch((err) => res.status(400).send());
 
 });
 
 app.get('/users/me', authenticate, (req, res) => {
 
-    // "current login" user with a verified "token"
-    // currentUser = req.user;
     res.send(req.user);
 
 });
 
-app.post('/users/login', (req, res) => {
+app.post('/users/login', async (req, res) => {
 
-    const body = _.pick(req.body, [ 'email', 'password' ]);
+    try {
 
-    Users.findByCredentials(body.email, body.password).then((user) => {
 
-       // because "user" arg, "generateAuthToken" must be callback.
+        const body = _.pick(req.body, [ 'email', 'password' ]);
+
+        const user = await Users.findByCredentials(body.email, body.password);
+
+        const token = await user.generateAuthToken();
+
+        res.header('x-auth', token).send(user);
+
+    } catch (e) {
+
+        res.status(400).send();
+
+    }
+    
+
+    /*Users.findByCredentials(body.email, body.password).then((user) => {
+
        return user.generateAuthToken().then((token) => {
 
               res.header('x-auth', token).send(user);
 
-       });
+        res.status(400).send())
+
 
     }).catch((err) => res.status(400).send());
-
+*/
 });
 
-app.delete('/users/me/token', authenticate, (req, res) =>{
+app.delete('/users/me/token', authenticate, async (req, res) =>{
 
-    req.user.removeToken(req.token).then(() => {
+    
+    // We do not need to return
+    try {
+
+        await req.user.removeToken(req.token);
 
         res.status(200).send();
 
-    }, () => {
+    } catch (e) {
 
         res.status(400).send();
 
-    });
-
+    }
+    
 });
 
 app.get('/users', (req, res) => {
@@ -122,14 +153,12 @@ app.get('/users/:id', (req, res) => {
 
 // ====================================== Todoso ==================================
 
-// In postman, sending a token which is switching to user's _id
 app.post('/todoso', authenticate, (req, res) => {
     
     const todoso = new Todoso ( {
 
         text: req.body.text,
 
-        // From authenticate
         _user: req.user._id 
 
     });
@@ -146,7 +175,6 @@ app.post('/todoso', authenticate, (req, res) => {
 
 });
 
-// In postman, sending a token which is switching to user's _id
 app.get('/todoso', authenticate, (req, res) => {
 
     Todoso.find({ _user : req.user._id })
@@ -173,9 +201,6 @@ app.get('/todoso/:id', authenticate, (req, res) => {
 
     if(!ObjectID.isValid(id)) return res.status(404).send();
 
-    // By using 'authenticate' m/w
-    // It must have both identified _id and _user 
-    //      to successfully get back to the user.
     Todoso.findOne({ 
 
         _user : req.user._id,
@@ -197,29 +222,45 @@ app.get('/todoso/:id', authenticate, (req, res) => {
 
 });
 
-app.delete('/todoso/:id', authenticate, (req, res) => {
+app.delete('/todoso/:id', authenticate, async (req, res) => {
 
-    var id = req.params.id;
 
-    if(!ObjectID.isValid(id)) return res.status(404).send();
+    try {
 
-    // 1)
-    // Todoso.findByIdAndRemove(id).then((result) => {
+        var id = req.params.id;
 
-    // findOneAndRemove can put more than one conditions!!!! 
-    //      but it just finds one doc. 
-    Todoso.findOneAndRemove({
+        if(!ObjectID.isValid(id)) return res.status(404).send();
 
-             _id : id,
-             _user : req.user._id
 
-    }).then((result) => {
+        const result = Todoso.findOneAndRemove({
 
-        if(!result) return res.status(404).send();
+                  _id : id,
+                  _user : req.user._id
+        });
 
-        res.send({result});
+       // if(!result) return res.status(404).send();
 
-    }).catch(err => res.status(400).send(err));
+        res.send({result});    
+
+    } catch(e) {
+
+        res.status(400).send(err);
+
+    }
+    
+
+    // Todoso.findOneAndRemove({
+
+    //          _id : id,
+    //          _user : req.user._id
+
+    // }).then((result) => {
+
+    //     if(!result) return res.status(404).send();
+
+    //     res.send({result});
+
+    // }).catch(err => res.status(400).send(err));
 
 });
 
@@ -229,9 +270,6 @@ app.patch('/todoso/:id', authenticate, (req, res) => {
    
     const body = _.pick(req.body, ['text', 'completed']);
     
-    // console.log('req.body:', req.body); //=> req.body: { completed: true }
-    // console.log('body:', body); // => body: { completed: true }
-
     if (!ObjectID.isValid(id)) return res.status(404).send();
 
     if (_.isBoolean(body.completed) && body.completed) {
@@ -244,12 +282,6 @@ app.patch('/todoso/:id', authenticate, (req, res) => {
 
     }   
     
-    // 1)
-    // Todoso.findOneAndUpdate(id, { $set : body }, { new : true }).then( updated => {
-
-    // 2)
-    // With 'authenticate'
-    // Must use the object!!! NOT Variable here.
     Todoso.findOneAndUpdate({ 
 
             _id: id,

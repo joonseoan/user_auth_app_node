@@ -1,11 +1,11 @@
-/*console.log('starting userServer_4.test.js');
+console.log('starting userServer_6.test.js');
 
 const expect = require('expect'); 
 const request = require('supertest');
 const { ObjectID } = require('mongodb');
 const jwt = require('jsonwebtoken');
 
-const { app } = require('../userServer_5');
+const { app } = require('../userServer_6');
 const { Todoso } = require('../models/todoso_5');
 const { Users } = require('../models/users_4');
 const mongoose = require('mongoose');
@@ -580,4 +580,4 @@ describe('Delete /users/me/token', () => {
             });
     });
 
-});*/
+});

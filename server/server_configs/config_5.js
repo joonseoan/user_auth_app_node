@@ -24,20 +24,10 @@ if (env === 'development' || env === 'test') {
 
 		// console.log("process.env: ", process.env);
 		// Assigns values of "configEnv" to the value of "process.env.xxx"
+
+		// It assigns two roles: 1) creates a new properites with value 2) assined value to the existing properties
 		process.env[key] = configEnv[key];
 
 	});
 
 }
-
-// if (env === 'development') {
-
-//     process.env.PORT = 3000;
-//     process.env.MONGODB_URI = 'mongodb://localhost:27017/User-Profile-Data';
-
-// } else if (env === 'test') {
-
-//     process.env.PORT = 3000;
-//     process.env.MONGODB_URI = `mongodb://localhost:27017/User-Profile-Test`;
-
-// }
