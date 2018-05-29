@@ -224,31 +224,28 @@ app.get('/todoso/:id', authenticate, (req, res) => {
 
 app.delete('/todoso/:id', authenticate, async (req, res) => {
 
+    const id = req.params.id;
 
+    if(!ObjectID.isValid(id)) return res.status(404).send();
+   
     try {
-
-        var id = req.params.id;
-
-        if(!ObjectID.isValid(id)) return res.status(404).send();
-
-
-        const result = Todoso.findOneAndRemove({
+    
+        const result = await Todoso.findOneAndRemove({
 
                   _id : id,
                   _user : req.user._id
         });
 
-       // if(!result) return res.status(404).send();
+        if(!result) return res.status(404).send();
 
         res.send({result});    
 
     } catch(e) {
 
-        res.status(400).send(err);
+        res.status(400).send(e);
 
     }
     
-
     // Todoso.findOneAndRemove({
 
     //          _id : id,
