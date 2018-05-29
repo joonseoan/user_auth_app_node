@@ -131,24 +131,39 @@ app.get('/users', (req, res) => {
 
 app.get('/users/:id', (req, res) => {
 
-    var id = req.params.id;
+    const id = req.params.id;
 
     if(!ObjectID.isValid(id)) return res.status(404).send();
 
-    Users.findById(id).then(byID => {
+    try {
 
-        if (!byID) return res.status(404).send();
+        const byID = Users.findById(id);
+
+        if(!byID) return res.status(404).send();
 
         res.send({ byID });
 
-    }).catch( err => res.status(400).send());
+    } catch (e) {
 
-}, (err) => {
+        res.status(400).send();
 
-    res.status(400).send(err);
+    }
+
+    
+
+//     Users.findById(id).then(byID => {
+
+//         if (!byID) return res.status(404).send();
+
+//         res.send({ byID });
+
+//     }).catch( err => res.status(400).send());
+
+// }, (err) => {
+
+//     res.status(400).send(err);
 
 });
-
 
 
 // ====================================== Todoso ==================================
