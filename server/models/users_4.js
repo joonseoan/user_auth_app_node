@@ -28,18 +28,18 @@ const usersSchema = new Schema ({
     },
     password: {
         type: String,
-        require: true,
+        required: true,
         minlength: 8
     },
     tokens: [
         {
             access: {
                 type: String,
-                require: true
+                required: true
             },
             token: {
                 type: String,
-                require: true
+                required: true
             }
         }
     ],

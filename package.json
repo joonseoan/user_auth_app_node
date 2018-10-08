@@ -2,7 +2,7 @@
   "name": "userauth",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "userServer_6.js",
   "scripts": {
     "start": "node server/userServer_5.js",
     "test": "export NODE_ENV=test || SET \"NODE_ENV=test\" && mocha server/tests/*.test.js",

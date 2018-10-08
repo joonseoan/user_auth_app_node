@@ -60,6 +60,7 @@ app.get('/users/me', authenticate, (req, res) => {
 
 });
 
+
 app.post('/users/login', async (req, res) => {
 
     try {
@@ -69,6 +70,7 @@ app.post('/users/login', async (req, res) => {
 
         const user = await Users.findByCredentials(body.email, body.password);
 
+        console.log('user: ', user);
         const token = await user.generateAuthToken();
 
         res.header('x-auth', token).send(user);
